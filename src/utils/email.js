@@ -123,3 +123,109 @@ export const sendPasswordResetEmail = async (to, resetUrl, name = 'there') => {
     html,
   });
 };
+
+/**
+ * Sends a welcome email with role and login credentials.
+ *
+ * @param {string} to        - Recipient email address
+ * @param {string} name      - Recipient's display name
+ * @param {string} role      - Assigned role
+ * @param {string} password  - Auto-generated password
+ * @param {string} loginUrl  - Login URL for the platform
+ */
+export const sendWelcomeEmail = async (to, name, role, password, loginUrl) => {
+  const transporter = createTransporter();
+  const formattedRole =
+    role.charAt(0).toUpperCase() + role.slice(1).toLowerCase();
+
+  const html = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+      <title>Welcome to TekSchool</title>
+    </head>
+    <body style="margin:0;padding:0;background:#f4f6fb;font-family:'Segoe UI',Arial,sans-serif;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6fb;padding:40px 0;">
+        <tr>
+          <td align="center">
+            <table width="560" cellpadding="0" cellspacing="0"
+              style="background:#ffffff;border-radius:16px;overflow:hidden;
+                     box-shadow:0 4px 24px rgba(30,27,75,0.10);">
+
+              <!-- Header -->
+              <tr>
+                <td style="background:linear-gradient(135deg,#1E1B4B 0%,#2D5FA8 100%);
+                            padding:32px 40px;text-align:center;">
+                  <h1 style="margin:0;color:#ffffff;font-size:26px;font-weight:800;
+                             letter-spacing:-0.5px;">TekSchool</h1>
+                  <p style="margin:6px 0 0;color:rgba(255,255,255,0.70);font-size:13px;">
+                    Welcome Aboard!
+                  </p>
+                </td>
+              </tr>
+
+              <!-- Body -->
+              <tr>
+                <td style="padding:40px 40px 32px;">
+                  <p style="margin:0 0 16px;color:#1E1B4B;font-size:16px;font-weight:600;">
+                    Hi ${name},
+                  </p>
+                  <p style="margin:0 0 24px;color:#4b5563;font-size:15px;line-height:1.6;">
+                    Your account has been successfully created. You have been assigned the role of <strong>${formattedRole}</strong>.
+                  </p>
+                  
+                  <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin-bottom:24px;text-align:left;">
+                    <p style="margin:0 0 8px;color:#4b5563;font-size:14px;"><strong>Your Login Credentials:</strong></p>
+                    <p style="margin:0 0 8px;color:#1E1B4B;font-size:14px;">Email: <strong>${to}</strong></p>
+                    <p style="margin:0;color:#1E1B4B;font-size:14px;">Password: <strong>${password}</strong></p>
+                  </div>
+
+                  <!-- CTA Button -->
+                  <table cellpadding="0" cellspacing="0" style="margin:0 auto 24px;">
+                    <tr>
+                      <td align="center"
+                          style="background:linear-gradient(135deg,#1E1B4B,#2D5FA8);
+                                 border-radius:50px;padding:14px 36px;">
+                        <a href="${loginUrl}"
+                           style="color:#ffffff;font-size:15px;font-weight:700;
+                                  text-decoration:none;letter-spacing:0.2px;">
+                          Login to Your Account &rarr;
+                        </a>
+                      </td>
+                    </tr>
+                  </table>
+
+                  <p style="margin:0 0 24px;color:#9ca3af;font-size:13px;line-height:1.5;">
+                    For security reasons, we strongly recommend changing your password after your first login.
+                  </p>
+                </td>
+              </tr>
+
+              <!-- Footer -->
+              <tr>
+                <td style="background:#f9fafb;padding:20px 40px;border-top:1px solid #e5e7eb;
+                            text-align:center;">
+                  <p style="margin:0;color:#9ca3af;font-size:12px;">
+                    &copy; ${new Date().getFullYear()} TekSchool, Bengaluru.
+                    All rights reserved.
+                  </p>
+                </td>
+              </tr>
+
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+  `;
+
+  await transporter.sendMail({
+    from: `"TekSchool" <${process.env.EMAIL_USER}>`,
+    to,
+    subject: `Welcome to TekSchool - Your ${formattedRole} Account Details`,
+    html,
+  });
+};

@@ -1,3 +1,4 @@
+import { ZodError } from 'zod';
 import { AppError } from '../utils/AppError.js';
 
 /**
@@ -17,12 +18,15 @@ export const validate = (schema) => {
       });
       next();
     } catch (err) {
-      if (err.errors && Array.isArray(err.errors)) {
-        // If validation fails, format the Zod errors into a readable string
-        const errorMessages = err.errors
-          .map((e) => `${e.path.join('.')}: ${e.message}`)
+      if (err instanceof ZodError) {
+        // If validation fails, format the Zod issues into a readable string
+        const errorMessages = err.issues
+          .map((e) => {
+            const path = e.path.join('.');
+            return path ? `${path}: ${e.message}` : e.message;
+          })
           .join(', ');
-        return next(new AppError(`Validation failed - ${errorMessages}`, 400));
+        return next(new AppError(`Validation error - ${errorMessages}`, 400));
       }
       return next(new AppError(err.message || 'Validation failed', 400));
     }

@@ -1,94 +1,78 @@
 import { z } from 'zod';
 
-// ─────────────────────────────────────────────────────────────
-// LOGIN VALIDATION
-// ─────────────────────────────────────────────────────────────
+const baseUserSchema = {
+  name: z.string().min(2).max(80).trim(),
+  email: z.string().email().trim().toLowerCase(),
+};
+
+const passwordMatchRefine = [
+  (data) => data.password === data.passwordConfirm,
+  {
+    message: 'Passwords do not match',
+    path: ['passwordConfirm'],
+  },
+];
+
+// ==============================================================
+// PUBLIC VALIDATIONS
+// ==============================================================
 export const loginSchema = z.object({
   body: z.object({
-    email: z
-      .string({ required_error: 'Email is required' })
-      .email('Invalid email address')
-      .trim()
-      .toLowerCase(),
-    password: z
-      .string({ required_error: 'Password is required' })
-      .min(1, 'Password cannot be empty'),
-    clientType: z
-      .enum(['landingPage', 'studentPanel'], {
-        required_error: 'Client type is required (landingPage or studentPanel)',
-        invalid_type_error:
-          'Client type must be either landingPage or studentPanel',
-      })
-      .optional(),
+    email: z.string().email().trim().toLowerCase(),
+    password: z.string().min(1),
+    clientType: z.enum(['landingPage', 'studentPanel']).optional(),
   }),
 });
 
-// ─────────────────────────────────────────────────────────────
-// REGISTER VALIDATION
-// ─────────────────────────────────────────────────────────────
-export const registerSchema = z.object({
-  body: z
-    .object({
-      name: z
-        .string({ required_error: 'Name is required' })
-        .min(2, 'Name must be at least 2 characters')
-        .max(80, 'Name cannot exceed 80 characters')
-        .trim(),
-      email: z
-        .string({ required_error: 'Email is required' })
-        .email('Invalid email address')
-        .trim()
-        .toLowerCase(),
-      password: z
-        .string({ required_error: 'Password is required' })
-        .min(8, 'Password must be at least 8 characters long'),
-      passwordConfirm: z.string({
-        required_error: 'Password confirmation is required',
-      }),
-      clientType: z
-        .enum(['landingPage', 'studentPanel'], {
-          required_error:
-            'Client type is required (landingPage or studentPanel)',
-          invalid_type_error:
-            'Client type must be either landingPage or studentPanel',
-        })
-        .optional(),
-    })
-    .refine((data) => data.password === data.passwordConfirm, {
-      message: 'Passwords do not match',
-      path: ['passwordConfirm'],
-    }),
-});
-
-// ─────────────────────────────────────────────────────────────
-// FORGOT PASSWORD VALIDATION
-// ─────────────────────────────────────────────────────────────
 export const forgotPasswordSchema = z.object({
+  body: z.object({ email: z.string().email().trim().toLowerCase() }),
+});
+
+export const resetPasswordSchema = z
+  .object({
+    body: z.object({
+      token: z.string(),
+      password: z.string().min(8),
+      passwordConfirm: z.string(),
+    }),
+  })
+  .refine(...passwordMatchRefine);
+
+// ==============================================================
+// SPECIFIC ROLE CREATION SCHEMAS
+// ==============================================================
+
+export const registerFinanceSchema = z.object({
   body: z.object({
-    email: z
-      .string({ required_error: 'Email is required' })
-      .email('Invalid email address')
-      .trim()
-      .toLowerCase(),
+    ...baseUserSchema,
   }),
 });
 
-// ─────────────────────────────────────────────────────────────
-// RESET PASSWORD VALIDATION
-// ─────────────────────────────────────────────────────────────
-export const resetPasswordSchema = z.object({
-  body: z
-    .object({
-      token: z.string({ required_error: 'Reset token is required' }),
-      password: z
-        .string({ required_error: 'New password is required' })
-        .min(8, 'Password must be at least 8 characters long'),
-      passwordConfirm: z.string({
-        required_error: 'Password confirmation is required',
-      }),
-    })
-    .refine((data) => data.password === data.passwordConfirm, {
-      message: 'Passwords do not match',
-      path: ['passwordConfirm'], // Assigns the error to the passwordConfirm field
-    }),
+export const registerInstructorSchema = z.object({
+  body: z.object({
+    ...baseUserSchema,
+  }),
+});
+
+export const registerAdmissionsSchema = z.object({
+  body: z.object({
+    ...baseUserSchema,
+  }),
+});
+
+export const registerStudentSchema = z.object({
+  body: z.object({
+    ...baseUserSchema,
+    clientType: z.enum(['landingPage', 'studentPanel']).optional(),
+  }),
+});
+
+// ==============================================================
+// SPECIFIC ROLE UPDATE SCHEMAS
+// ==============================================================
+export const updateGenericUserSchema = z.object({
+  body: z.object({
+    name: z.string().min(2).max(80).trim().optional(),
+    email: z.string().email().trim().toLowerCase().optional(),
+  }),
 });

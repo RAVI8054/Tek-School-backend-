@@ -7,10 +7,10 @@ import {
   signRefreshToken,
   verifyRefreshToken,
 } from '../../utils/token.js';
-import { sendPasswordResetEmail } from '../../utils/email.js';
+import { sendPasswordResetEmail, sendWelcomeEmail } from '../../utils/email.js';
 
 // ─────────────────────────────────────────────────────────────
-// Helper — build the token payload from a User document
+// Helper
 // ─────────────────────────────────────────────────────────────
 const buildTokenPayload = (user, sessionId, clientType) => ({
   id: user._id,
@@ -19,9 +19,6 @@ const buildTokenPayload = (user, sessionId, clientType) => ({
   clientType: clientType,
 });
 
-// ─────────────────────────────────────────────────────────────
-// Helper — strip sensitive fields and return a clean user object
-// ─────────────────────────────────────────────────────────────
 const sanitizeUser = (user) => ({
   id: user._id,
   name: user.name,
@@ -32,57 +29,109 @@ const sanitizeUser = (user) => ({
 });
 
 // ─────────────────────────────────────────────────────────────
-// REGISTER
+// SPECIFIC ROLE CREATION / UPDATE / DELETE (Industrial Level)
 // ─────────────────────────────────────────────────────────────
+
 /**
- * Registers a new student account and returns tokens.
+ * Generic factory for creating users of a specific role
  */
-export const registerUser = async (name, email, password) => {
-  // 1. Check if user exists
-  const existingUser = await User.findOne({ email });
+export const createUserWithRole = async (userData, role) => {
+  const existingUser = await User.findOne({ email: userData.email });
   if (existingUser) {
     throw new AppError('An account with this email already exists.', 400);
   }
 
-  // 2. Create the user
+  // Generate a random 12-character alphanumeric password
+  const generatedPassword = crypto.randomBytes(6).toString('hex');
+
   const user = await User.create({
-    name,
-    email,
-    passwordHash: password,
-    role: ROLES.STUDENT,
+    ...userData,
+    passwordHash: generatedPassword,
+    role,
   });
 
+  const clientUrl = process.env.CLIENT_URL || 'http://localhost:3001';
+  const loginUrl = `${clientUrl}/login`; // Modify this route according to your frontend setup
+
+  // Send the welcome email with credentials
+  try {
+    await sendWelcomeEmail(
+      user.email,
+      user.name,
+      user.role,
+      generatedPassword,
+      loginUrl
+    );
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('Failed to send welcome email:', error);
+    // Even if the email fails, the user is created. We can just return the generated password.
+  }
+
+  return {
+    user: sanitizeUser(user),
+    generatedPassword,
+  };
+};
+
+export const updateGenericUser = async (id, updateData, allowedRole) => {
+  const userToUpdate = await User.findById(id);
+  if (!userToUpdate) throw new AppError('User not found', 404);
+
+  // Ensure we are updating a user of the correct role (e.g. don't update admin via finance route)
+  if (userToUpdate.role !== allowedRole) {
+    throw new AppError(
+      `Cannot update user. Expected role: ${allowedRole}`,
+      403
+    );
+  }
+
+  if (updateData.email) {
+    const existingUser = await User.findOne({
+      email: updateData.email,
+      _id: { $ne: id },
+    });
+    if (existingUser)
+      throw new AppError('An account with this email already exists.', 400);
+  }
+
+  const user = await User.findByIdAndUpdate(id, updateData, {
+    new: true,
+    runValidators: true,
+  });
   return { user: sanitizeUser(user) };
+};
+
+export const deleteGenericUser = async (id, allowedRole) => {
+  const userToDelete = await User.findById(id);
+  if (!userToDelete) throw new AppError('User not found', 404);
+
+  if (userToDelete.role !== allowedRole) {
+    throw new AppError(
+      `Cannot delete user. Expected role: ${allowedRole}`,
+      403
+    );
+  }
+
+  await User.findByIdAndDelete(id);
+  return true;
 };
 
 // ─────────────────────────────────────────────────────────────
 // LOGIN
 // ─────────────────────────────────────────────────────────────
-/**
- * Validates credentials and returns access + refresh tokens.
- *
- * @param {string} email
- * @param {string} password
- * @param {string} clientType
- * @returns {{ user: object, accessToken: string, refreshToken: string }}
- */
 export const loginUser = async (email, password, clientType) => {
-  // 1. Find user — explicitly select passwordHash (hidden by default)
   const user = await User.findOne({ email }).select('+passwordHash');
 
-  // 3. Verify credentials (combined check prevents user-enumeration)
   if (!user || !(await user.correctPassword(password))) {
     throw new AppError('Incorrect email or password.', 401);
   }
 
-  // Enforce clientType requirement for students only
   if (user.role === ROLES.STUDENT && !clientType) {
     throw new AppError('Client type is required for student login.', 400);
   }
 
-  // 4. Stamp last login and set session Id (only for student panel)
   user.lastLoginAt = new Date();
-
   let sessionId = null;
   if (clientType === 'studentPanel') {
     sessionId = crypto.randomUUID();
@@ -91,20 +140,16 @@ export const loginUser = async (email, password, clientType) => {
 
   await user.save({ validateBeforeSave: false });
 
-  // 5. Sign tokens
   const payload = buildTokenPayload(user, sessionId, clientType);
   const accessToken = signAccessToken(payload);
   const refreshToken = signRefreshToken(payload);
 
   return { user: sanitizeUser(user), accessToken, refreshToken };
 };
+
 // ─────────────────────────────────────────────────────────────
-// LOGOUT  (stateless — controller clears the cookie)
+// LOGOUT
 // ─────────────────────────────────────────────────────────────
-/**
- * Logs out the user. By clearing the studentPanelSessionId, we ensure
- * any stolen refresh tokens become permanently useless immediately.
- */
 export const logoutUser = async (userId) => {
   if (userId) {
     const user = await User.findById(userId);
@@ -119,31 +164,18 @@ export const logoutUser = async (userId) => {
 // ─────────────────────────────────────────────────────────────
 // FORGOT PASSWORD
 // ─────────────────────────────────────────────────────────────
-/**
- * Generates a password-reset token and sends the email.
- * Always responds with a generic success message to prevent
- * user-enumeration attacks (even if email does not exist).
- *
- * @param {string} email
- * @param {string} clientUrl  - Base URL for the reset link (from env)
- */
 export const forgotPassword = async (email, clientUrl) => {
   const user = await User.findOne({ email });
-
-  // Silently succeed if user not found (anti-enumeration)
   if (!user) return;
 
-  // Generate raw token and save hashed version + expiry
   const rawToken = user.createPasswordResetToken();
   await user.save({ validateBeforeSave: false });
 
-  // Build reset URL and send email
   const resetUrl = `${clientUrl}/reset-password/${rawToken}`;
 
   try {
     await sendPasswordResetEmail(user.email, resetUrl, user.name);
   } catch {
-    // Roll back DB changes if email fails
     user.passwordResetToken = undefined;
     user.passwordResetExpires = undefined;
     await user.save({ validateBeforeSave: false });
@@ -157,23 +189,12 @@ export const forgotPassword = async (email, clientUrl) => {
 // ─────────────────────────────────────────────────────────────
 // RESET PASSWORD
 // ─────────────────────────────────────────────────────────────
-/**
- * Verifies the reset token, validates the new password, and
- * updates the user's credentials.
- *
- * @param {string} rawToken
- * @param {string} newPassword
- * @param {string} confirmPassword
- * @returns {{ user: object, accessToken: string, refreshToken: string }}
- */
 export const resetPassword = async (rawToken, newPassword) => {
-  // 1. Hash the raw token to compare with the stored hash
   const hashedToken = crypto
     .createHash('sha256')
     .update(rawToken)
     .digest('hex');
 
-  // 3. Find user with a valid (non-expired) token
   const user = await User.findOne({
     passwordResetToken: hashedToken,
     passwordResetExpires: { $gt: Date.now() },
@@ -183,13 +204,9 @@ export const resetPassword = async (rawToken, newPassword) => {
     throw new AppError('Reset token is invalid or has expired.', 400);
   }
 
-  // 4. Update password (pre-save hook hashes it + clears reset fields)
   user.passwordHash = newPassword;
   await user.save();
 
-  // 5. Issue fresh tokens (reuse existing session if available, or generate a temporary one,
-  // actually for reset password it's better to force re-login by not returning tokens,
-  // but if we do, we need a clientType. Let's just generate a studentPanel session for now as a fallback)
   const sessionId = crypto.randomUUID();
   user.studentPanelSessionId = sessionId;
   await user.save({ validateBeforeSave: false });
@@ -204,13 +221,9 @@ export const resetPassword = async (rawToken, newPassword) => {
 // ─────────────────────────────────────────────────────────────
 // REFRESH TOKEN
 // ─────────────────────────────────────────────────────────────
-/**
- * Rotates the refresh token and returns new tokens if valid.
- */
 export const refreshTokenService = async (token) => {
   if (!token) throw new AppError('No refresh token provided', 401);
 
-  // 1. Verify token
   let decoded;
   try {
     decoded = verifyRefreshToken(token);
@@ -223,8 +236,6 @@ export const refreshTokenService = async (token) => {
 
   const { id, sessionId, clientType } = decoded;
 
-  // 2. Find user with the matching session ID (if student panel)
-  // Also select passwordChangedAt to ensure old tokens are invalidated if password changed
   const user = await User.findById(id).select(
     '+studentPanelSessionId +passwordChangedAt'
   );
@@ -235,7 +246,6 @@ export const refreshTokenService = async (token) => {
     );
   }
 
-  // 2.5 Ensure the password wasn't changed after this token was issued
   if (user.changedPasswordAfter(decoded.iat)) {
     throw new AppError(
       'Password was recently changed. Please log in again.',
@@ -252,7 +262,6 @@ export const refreshTokenService = async (token) => {
     }
   }
 
-  // 3. Rotate session ID (if student panel)
   let newSessionId = null;
   if (clientType === 'studentPanel') {
     newSessionId = crypto.randomUUID();
@@ -260,7 +269,6 @@ export const refreshTokenService = async (token) => {
     await user.save({ validateBeforeSave: false });
   }
 
-  // 4. Sign new tokens
   const payload = buildTokenPayload(user, newSessionId, clientType);
   const accessToken = signAccessToken(payload);
   const newRefreshToken = signRefreshToken(payload);
