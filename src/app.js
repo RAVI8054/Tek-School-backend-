@@ -4,8 +4,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import authRouter from './features/auth/auth.route.js';
-import programRouter from './features/Curriculum Management/program/program.route.js';
-import landingPageRouter from './features/landing page/Book Demo/book-demo.route.js';
+import enquiryRouter from './features/Admin panal/Enquiry/enquiry.route.js';
 import { globalErrorHandler } from './middlewares/errorHandler.js';
 import { AppError } from './utils/AppError.js';
 
@@ -28,8 +27,7 @@ app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 app.use(cookieParser());
 
 app.use('/api/v1/auth', authRouter);
-app.use('/api/v1/programs', programRouter);
-app.use('/api/v1/landingPage', landingPageRouter);
+app.use('/api/v1/enquiry', enquiryRouter);
 
 app.get('/health', (_req, res) => {
   res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });

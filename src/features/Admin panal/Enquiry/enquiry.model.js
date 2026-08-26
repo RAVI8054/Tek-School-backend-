@@ -22,23 +22,41 @@ const demoRequestSchema = new mongoose.Schema(
     },
     program: {
       type: String,
-      required: [true, 'Program is required'],
       trim: true,
     },
     slot: {
-      raw: { type: String, required: true },
+      raw: { type: String },
       type: { type: String, enum: ['callback', 'scheduled'] },
       dateString: { type: String },
       timePreference: { type: String },
     },
-    goal: {
+    education: {
       type: String,
-      required: [true, 'Goal is required'],
       trim: true,
     },
-    experience_level: {
+    inquiry_type: {
       type: String,
-      required: [true, 'Experience level is required'],
+      enum: [
+        'book demo',
+        'talk to counselor',
+        'enroll',
+        'workshop',
+        'school',
+        'college',
+        'ai lab',
+      ],
+      required: [true, 'Inquiry type is required'],
+    },
+    institution_name: {
+      type: String,
+      trim: true,
+    },
+    school_name: {
+      type: String,
+      trim: true,
+    },
+    workshop_name: {
+      type: String,
       trim: true,
     },
     utm_source: {
@@ -55,9 +73,28 @@ const demoRequestSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['pending', 'contacted', 'completed'],
+      enum: ['pending', 'in_progress', 'completed', 'junk'],
       default: 'pending',
     },
+    assigned_to: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
+    confirmed_slot: {
+      date: { type: Date },
+      time: { type: String },
+    },
+    rejection_reason: {
+      type: String,
+      trim: true,
+    },
+    admin_notes: [
+      {
+        note: { type: String, required: true },
+        addedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
   },
   {
     timestamps: true,
