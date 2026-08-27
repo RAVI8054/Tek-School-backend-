@@ -61,16 +61,7 @@ const demoRequestSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: [
-        'new',
-        'in_progress',
-        'scheduled',
-        'rescheduled',
-        'completed',
-        'enrolled',
-        'rejected',
-        'junk',
-      ],
+      enum: ['new', 'in_progress', 'scheduled', 'rejected', 'completed'],
       default: 'new',
     },
     assigned_to: {

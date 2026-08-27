@@ -59,7 +59,7 @@ export const getAllEnquiries = async (query) => {
 export const getEnquiryById = async (id, userId = null) => {
   const enquiry = await DemoRequest.findById(id).populate(
     'assigned_to admin_notes.addedBy',
-    'name email'
+    'name email role'
   );
 
   if (enquiry && enquiry.status === 'new') {
@@ -81,6 +81,24 @@ export const updateEnquiry = async (id, updateData, addedBy) => {
   const enquiry = await DemoRequest.findById(id);
   if (!enquiry) return null;
 
+  // Fetch the acting user's name + role to use in the note
+  let actorLabel = 'System';
+  if (addedBy) {
+    const { User } = await import('../../auth/auth.model.js');
+    const actor = await User.findById(addedBy).select('name role');
+    if (actor) {
+      const roleLabel =
+        {
+          admin: 'Admin',
+          admissions: 'Admissions',
+          instructor: 'Instructor',
+          finance: 'Finance',
+          student: 'Student',
+        }[actor.role] ?? actor.role;
+      actorLabel = `${actor.name} (${roleLabel})`;
+    }
+  }
+
   const { note, status, ...restData } = updateData;
   const updatePayload = { $set: restData };
 
@@ -88,8 +106,11 @@ export const updateEnquiry = async (id, updateData, addedBy) => {
 
   if (status && status !== enquiry.status) {
     updatePayload.$set.status = status;
-    const statusMsg = `[System] Status changed from '${enquiry.status}' to '${status}'.`;
+    const statusMsg = `[${actorLabel}] Status changed from '${enquiry.status}' to '${status}'.`;
     finalNote = note ? `${statusMsg} Note: ${note}` : statusMsg;
+  } else if (note) {
+    // Pure note without status change — still attribute to the actor
+    finalNote = note;
   }
 
   if (finalNote) {
@@ -99,7 +120,7 @@ export const updateEnquiry = async (id, updateData, addedBy) => {
   return await DemoRequest.findByIdAndUpdate(id, updatePayload, {
     new: true,
     runValidators: true,
-  }).populate('assigned_to admin_notes.addedBy', 'name email');
+  }).populate('assigned_to admin_notes.addedBy', 'name email role');
 };
 
 export const deleteEnquiry = async (id) => {

@@ -1,9 +1,16 @@
 import * as service from './enquiry.service.js';
 import { catchAsync } from '../../../utils/catchAsync.js';
 import { AppError } from '../../../utils/AppError.js';
+import { sendEnquiryAcknowledgementEmail } from '../../../utils/email.js';
 
 export const bookDemo = catchAsync(async (req, res) => {
   const demoRequest = await service.createDemoRequest(req.body);
+
+  try {
+    await sendEnquiryAcknowledgementEmail(demoRequest.email, demoRequest.name);
+  } catch (error) {
+    console.error('Failed to send acknowledgement email:', error);
+  }
 
   res.status(201).json({
     status: 'success',
@@ -41,7 +48,7 @@ export const updateEnquiry = catchAsync(async (req, res, next) => {
   const enquiry = await service.updateEnquiry(
     req.params.id,
     req.body,
-    req.user._id
+    req.user?._id
   );
 
   if (!enquiry) {
