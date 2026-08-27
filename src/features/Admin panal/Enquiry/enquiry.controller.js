@@ -23,7 +23,7 @@ export const getAllEnquiries = catchAsync(async (req, res) => {
 });
 
 export const getEnquiry = catchAsync(async (req, res, next) => {
-  const enquiry = await service.getEnquiryById(req.params.id);
+  const enquiry = await service.getEnquiryById(req.params.id, req.user?._id);
 
   if (!enquiry) {
     return next(new AppError('No enquiry found with that ID', 404));
@@ -38,24 +38,9 @@ export const getEnquiry = catchAsync(async (req, res, next) => {
 });
 
 export const updateEnquiry = catchAsync(async (req, res, next) => {
-  const enquiry = await service.updateEnquiry(req.params.id, req.body);
-
-  if (!enquiry) {
-    return next(new AppError('No enquiry found with that ID', 404));
-  }
-
-  res.status(200).json({
-    status: 'success',
-    data: {
-      enquiry,
-    },
-  });
-});
-
-export const addAdminNote = catchAsync(async (req, res, next) => {
-  const enquiry = await service.addAdminNote(
+  const enquiry = await service.updateEnquiry(
     req.params.id,
-    req.body.note,
+    req.body,
     req.user._id
   );
 
@@ -63,7 +48,7 @@ export const addAdminNote = catchAsync(async (req, res, next) => {
     return next(new AppError('No enquiry found with that ID', 404));
   }
 
-  res.status(201).json({
+  res.status(200).json({
     status: 'success',
     data: {
       enquiry,

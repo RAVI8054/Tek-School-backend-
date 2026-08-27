@@ -59,22 +59,19 @@ const demoRequestSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
-    utm_source: {
-      type: String,
-      trim: true,
-    },
-    utm_medium: {
-      type: String,
-      trim: true,
-    },
-    utm_campaign: {
-      type: String,
-      trim: true,
-    },
     status: {
       type: String,
-      enum: ['pending', 'in_progress', 'completed', 'junk'],
-      default: 'pending',
+      enum: [
+        'new',
+        'in_progress',
+        'scheduled',
+        'rescheduled',
+        'completed',
+        'enrolled',
+        'rejected',
+        'junk',
+      ],
+      default: 'new',
     },
     assigned_to: {
       type: mongoose.Schema.Types.ObjectId,

@@ -28,7 +28,15 @@ const userSchema = new mongoose.Schema(
       },
       default: ROLES.STUDENT,
     },
-
+    createdChannelsCount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    isBlocked: {
+      type: Boolean,
+      default: false,
+    },
     studentPanelSessionId: {
       type: String,
       select: false,

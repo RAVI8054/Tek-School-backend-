@@ -1,0 +1,40 @@
+import express from 'express';
+
+// Auth Route
+import authRouter from '../features/auth/auth.route.js';
+
+// Admin Routes
+import enquiryRouter from '../features/Admin panal/Enquiry/enquiry.route.js';
+import adminCommunityRouter from '../features/Admin panal/Community/admin-community.route.js';
+
+// Student Routes
+import studentCommunityRouter from '../features/Student Panel/Community/student-community.route.js';
+
+const router = express.Router();
+
+// Centralized Route Registry
+const routes = [
+  {
+    path: '/auth',
+    route: authRouter,
+  },
+  {
+    path: '/enquiry',
+    route: enquiryRouter,
+  },
+  {
+    path: '/admin/community',
+    route: adminCommunityRouter,
+  },
+  {
+    path: '/student/community',
+    route: studentCommunityRouter,
+  },
+];
+
+// Mount all routes
+routes.forEach((route) => {
+  router.use(route.path, route.route);
+});
+
+export default router;

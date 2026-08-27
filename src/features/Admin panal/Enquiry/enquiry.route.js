@@ -6,7 +6,7 @@ import { protect, restrictTo } from '../../auth/auth.middleware.js';
 import { ROLES, STAFF_ROLES } from '../../../config/roles.js';
 
 const router = Router();
-
+//student side creation
 router.post('/enquiry', validate(valid.bookDemoSchema), ctrl.bookDemo);
 
 router.use(protect);
@@ -25,13 +25,6 @@ router.patch(
   restrictTo(...STAFF_ROLES),
   validate(valid.updateEnquirySchema),
   ctrl.updateEnquiry
-);
-
-router.post(
-  '/:id/notes',
-  restrictTo(...STAFF_ROLES),
-  validate(valid.addAdminNoteSchema),
-  ctrl.addAdminNote
 );
 
 router.delete('/:id', restrictTo(ROLES.ADMIN), ctrl.deleteEnquiry);

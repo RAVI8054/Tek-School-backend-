@@ -3,40 +3,33 @@ import { DemoRequest } from './enquiry.model.js';
 export const createDemoRequest = async (data) => {
   const requestData = { ...data };
 
-  if (data.slot) {
-    const parsedSlot = { raw: data.slot };
-
-    if (data.slot.startsWith('Callback')) {
-      parsedSlot.type = 'callback';
-      const parts = data.slot.split('·');
-      parsedSlot.timePreference =
-        parts.length > 1 ? parts[1].trim() : data.slot;
-    } else {
-      parsedSlot.type = 'scheduled';
-      const parts = data.slot.split('·');
-      if (parts.length > 1) {
-        parsedSlot.dateString = parts[0].trim();
-        parsedSlot.timePreference = parts[1].trim();
-      } else {
-        parsedSlot.dateString = data.slot;
-      }
-    }
-
-    requestData.slot = parsedSlot;
-  } else {
-    delete requestData.slot;
-  }
-
   const newRequest = await DemoRequest.create(requestData);
   return newRequest;
 };
 
 export const getAllEnquiries = async (query) => {
-  const { page = 1, limit = 10, status, inquiry_type, search } = query;
+  const {
+    page = 1,
+    limit = 10,
+    status,
+    inquiry_type,
+    category,
+    search,
+  } = query;
 
   const filter = {};
   if (status) filter.status = status;
-  if (inquiry_type) filter.inquiry_type = inquiry_type;
+
+  if (inquiry_type) {
+    filter.inquiry_type = inquiry_type;
+  } else if (category === 'tekschool') {
+    filter.inquiry_type = { $in: ['school', 'college', 'ai lab'] };
+  } else if (category === 'admission') {
+    filter.inquiry_type = {
+      $in: ['book demo', 'talk to counselor', 'enroll', 'workshop'],
+    };
+  }
+
   if (search) {
     filter.$or = [
       { name: { $regex: search, $options: 'i' } },
@@ -63,28 +56,50 @@ export const getAllEnquiries = async (query) => {
   };
 };
 
-export const getEnquiryById = async (id) => {
-  return await DemoRequest.findById(id).populate(
+export const getEnquiryById = async (id, userId = null) => {
+  const enquiry = await DemoRequest.findById(id).populate(
     'assigned_to admin_notes.addedBy',
     'name email'
   );
+
+  if (enquiry && enquiry.status === 'new') {
+    enquiry.status = 'in_progress';
+    const systemNote = {
+      note: "[System] Status automatically changed from 'new' to 'in_progress' upon opening.",
+    };
+    if (userId) {
+      systemNote.addedBy = userId;
+    }
+    enquiry.admin_notes.push(systemNote);
+    await enquiry.save();
+  }
+
+  return enquiry;
 };
 
-export const updateEnquiry = async (id, updateData) => {
-  return await DemoRequest.findByIdAndUpdate(id, updateData, {
+export const updateEnquiry = async (id, updateData, addedBy) => {
+  const enquiry = await DemoRequest.findById(id);
+  if (!enquiry) return null;
+
+  const { note, status, ...restData } = updateData;
+  const updatePayload = { $set: restData };
+
+  let finalNote = note;
+
+  if (status && status !== enquiry.status) {
+    updatePayload.$set.status = status;
+    const statusMsg = `[System] Status changed from '${enquiry.status}' to '${status}'.`;
+    finalNote = note ? `${statusMsg} Note: ${note}` : statusMsg;
+  }
+
+  if (finalNote) {
+    updatePayload.$push = { admin_notes: { note: finalNote, addedBy } };
+  }
+
+  return await DemoRequest.findByIdAndUpdate(id, updatePayload, {
     new: true,
     runValidators: true,
   }).populate('assigned_to admin_notes.addedBy', 'name email');
-};
-
-export const addAdminNote = async (id, note, addedBy) => {
-  return await DemoRequest.findByIdAndUpdate(
-    id,
-    {
-      $push: { admin_notes: { note, addedBy } },
-    },
-    { new: true, runValidators: true }
-  ).populate('assigned_to admin_notes.addedBy', 'name email');
 };
 
 export const deleteEnquiry = async (id) => {
