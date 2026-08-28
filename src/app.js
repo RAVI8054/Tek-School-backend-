@@ -17,16 +17,26 @@ app.use(
       if (!origin) return callback(null, true);
 
       if (process.env.CLIENT_URL) {
-        const allowedOrigins = process.env.CLIENT_URL.split(',').map((url) =>
-          url.trim()
+        const allowedOrigins = process.env.CLIENT_URL.split(',').map(
+          (url) => url.trim().replace(/\/$/, '') // Remove any trailing slash
         );
-        if (allowedOrigins.includes(origin)) {
+
+        // Remove trailing slash from incoming origin just in case
+        const incomingOrigin = origin.replace(/\/$/, '');
+
+        if (
+          allowedOrigins.includes(incomingOrigin) ||
+          incomingOrigin.includes('vercel.app')
+        ) {
           return callback(null, true);
         }
-        return callback(new Error('Not allowed by CORS'));
+
+        // Instead of throwing an error which causes a 500 status, just return false
+        // This allows the browser to handle the CORS failure cleanly
+        return callback(null, false);
       }
 
-      // Default behavior if CLIENT_URL is not set (e.g. local development)
+      // Default behavior if CLIENT_URL is not set
       return callback(null, true);
     },
     credentials: true,
