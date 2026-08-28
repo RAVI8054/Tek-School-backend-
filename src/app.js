@@ -53,6 +53,16 @@ app.use(cookieParser());
 // Mount Centralized Router
 app.use('/api/v1', routes);
 
+app.get('/', (_req, res) => {
+  res
+    .status(200)
+    .json({ status: 'success', message: 'Welcome to Tek School Backend API' });
+});
+
+app.get('/health', (_req, res) => {
+  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 app.all('/{*path}', (req, _res, next) => {
   next(new AppError(`Route ${req.originalUrl} not found on this server.`, 404));
 });
