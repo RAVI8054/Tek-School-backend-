@@ -11,37 +11,37 @@ const app = express();
 
 app.use(helmet());
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      if (!origin) return callback(null, true);
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
 
-      if (process.env.CLIENT_URL) {
-        const allowedOrigins = process.env.CLIENT_URL.split(',').map(
-          (url) => url.trim().replace(/\/$/, '') // Remove any trailing slash
-        );
+    if (process.env.CLIENT_URL) {
+      const allowedOrigins = process.env.CLIENT_URL.split(',').map(
+        (url) => url.trim().replace(/\/$/, '') // Remove any trailing slash
+      );
 
-        // Remove trailing slash from incoming origin just in case
-        const incomingOrigin = origin.replace(/\/$/, '');
+      // Remove trailing slash from incoming origin just in case
+      const incomingOrigin = origin.replace(/\/$/, '');
 
-        if (
-          allowedOrigins.includes(incomingOrigin) ||
-          incomingOrigin.includes('vercel.app')
-        ) {
-          return callback(null, true);
-        }
-
-        // Instead of throwing an error which causes a 500 status, just return false
-        // This allows the browser to handle the CORS failure cleanly
-        return callback(null, false);
+      if (allowedOrigins.includes(incomingOrigin)) {
+        return callback(null, true);
       }
 
-      // Default behavior if CLIENT_URL is not set
-      return callback(null, true);
-    },
-    credentials: true,
-  })
-);
+      // Instead of throwing an error which causes a 500 status, just return false
+      // This allows the browser to handle the CORS failure cleanly
+      return callback(null, false);
+    }
+
+    // Default behavior if CLIENT_URL is not set
+    return callback(null, true);
+  },
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
+
+// Handle browser preflight requests before route matching or DB work.
+app.options('*', cors(corsOptions));
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }

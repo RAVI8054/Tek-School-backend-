@@ -5,6 +5,10 @@ import '../src/config/firebase.js';
 
 // Vercel serverless function entrypoint
 export default async function handler(req, res) {
+  if (req.method === 'OPTIONS') {
+    return app(req, res);
+  }
+
   // Ensure database is connected before handling the request
   await connectDB();
 
