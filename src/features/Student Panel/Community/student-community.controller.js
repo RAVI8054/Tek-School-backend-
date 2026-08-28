@@ -82,10 +82,12 @@ export const getChannels = catchAsync(async (req, res, next) => {
     query.creatorId = { $ne: req.user.id };
   } else if (filter === 'discover') {
     query.members = { $ne: req.user.id };
+  } else if (filter === 'all') {
+    // No additional constraints needed for 'all', just search active channels
   } else {
     return next(
       new AppError(
-        "Filter is required and must be 'my_channels', 'enrolled', or 'discover'.",
+        "Filter is required and must be 'my_channels', 'enrolled', 'discover', or 'all'.",
         400
       )
     );
@@ -157,7 +159,7 @@ export const getMessages = catchAsync(async (req, res, next) => {
   const limit = parseInt(req.query.limit) || 20;
   const offset = parseInt(req.query.offset) || 0;
   // Allow channelId from body or query for GET requests
-  const channelId = req.body.channelId || req.query.channelId;
+  const channelId = (req.body && req.body.channelId) || req.query.channelId;
 
   if (!channelId) {
     return next(new AppError('Please provide a channelId.', 400));
@@ -227,17 +229,19 @@ export const reactToMessage = catchAsync(async (req, res, next) => {
   const message = await Message.findById(messageId);
   if (!message) return next(new AppError('Message not found', 404));
 
-  // Remove user from both arrays first to reset their state
-  message.likes = message.likes.filter((id) => id.toString() !== req.user.id);
-  message.dislikes = message.dislikes.filter(
-    (id) => id.toString() !== req.user.id
-  );
+  const userId = req.user.id;
+  const hasLiked = message.likes.some((id) => id.toString() === userId);
+  const hasDisliked = message.dislikes.some((id) => id.toString() === userId);
 
-  // Add to the appropriate array
-  if (action === 'like') {
-    message.likes.push(req.user.id);
-  } else if (action === 'dislike') {
-    message.dislikes.push(req.user.id);
+  // Remove user from both arrays first to reset their state
+  message.likes = message.likes.filter((id) => id.toString() !== userId);
+  message.dislikes = message.dislikes.filter((id) => id.toString() !== userId);
+
+  // Add to the appropriate array only if they didn't already have that reaction
+  if (action === 'like' && !hasLiked) {
+    message.likes.push(userId);
+  } else if (action === 'dislike' && !hasDisliked) {
+    message.dislikes.push(userId);
   }
 
   await message.save();

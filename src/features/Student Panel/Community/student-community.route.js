@@ -20,7 +20,8 @@ router.use(checkCommunityAccess);
 // ─────────────────────────────────────────────────────────────
 // CHANNEL ROUTES
 // ─────────────────────────────────────────────────────────────
-router.route('/channels').post(createChannel).get(getChannels);
+router.post('/channels', createChannel);
+router.get('/channels', getChannels);
 
 router.post('/channels/join', joinChannel);
 router.delete('/channels/delete', deleteChannel);
@@ -28,7 +29,8 @@ router.delete('/channels/delete', deleteChannel);
 // ─────────────────────────────────────────────────────────────
 // MESSAGE ROUTES
 // ─────────────────────────────────────────────────────────────
-router.route('/channels/messages').get(getMessages).post(sendMessage);
+router.get('/channels/messages', getMessages);
+router.post('/channels/messages', sendMessage);
 
 router.post('/messages/react', reactToMessage);
 
