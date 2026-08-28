@@ -3,6 +3,7 @@ import { protect, restrictTo } from '../../auth/auth.middleware.js';
 import { ROLES } from '../../../config/roles.js';
 import {
   getAllChannels,
+  getAdminChannelMessages,
   editChannel,
   adminDeleteChannel,
   adminDeleteMessage,
@@ -20,13 +21,14 @@ router.use(restrictTo(ROLES.ADMIN));
 // ─────────────────────────────────────────────────────────────
 router.route('/channels').get(getAllChannels);
 
-router.put('/channels/:channelId', editChannel);
+router.put('/channels/edit', editChannel);
+router.get('/channels/:channelId/messages', getAdminChannelMessages);
 router.delete('/channels/delete', adminDeleteChannel);
 
 // ─────────────────────────────────────────────────────────────
 // ADMIN MESSAGE & USER ROUTES
 // ─────────────────────────────────────────────────────────────
 router.delete('/messages/:messageId', adminDeleteMessage);
-router.post('/users/:userId/block', blockStudent);
+router.post('/users/block', blockStudent);
 
 export default router;

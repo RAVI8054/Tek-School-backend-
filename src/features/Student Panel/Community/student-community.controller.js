@@ -139,8 +139,11 @@ export const deleteChannel = catchAsync(async (req, res, next) => {
     return next(new AppError('You are not the creator of this channel.', 403));
   }
 
-  channel.status = 'deleted';
-  await channel.save();
+  // Permanently delete the channel
+  await Channel.findByIdAndDelete(channel._id);
+
+  // Cascade delete all messages in this channel
+  await Message.deleteMany({ channelId: channel._id });
 
   req.user.createdChannelsCount = Math.max(
     0,

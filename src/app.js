@@ -13,7 +13,22 @@ app.use(helmet());
 
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || '*',
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
+
+      if (process.env.CLIENT_URL) {
+        const allowedOrigins = process.env.CLIENT_URL.split(',').map((url) =>
+          url.trim()
+        );
+        if (allowedOrigins.includes(origin)) {
+          return callback(null, true);
+        }
+        return callback(new Error('Not allowed by CORS'));
+      }
+
+      // Default behavior if CLIENT_URL is not set (e.g. local development)
+      return callback(null, true);
+    },
     credentials: true,
   })
 );

@@ -5,8 +5,31 @@ import { catchAsync } from '../../../utils/catchAsync.js';
 import { AppError } from '../../../utils/AppError.js';
 
 export const getAllChannels = catchAsync(async (req, res, _next) => {
-  const channels = await Channel.find().populate('creatorId', 'name email');
+  const { search } = req.query;
+  const query = {};
+  if (search) {
+    query.$or = [
+      { name: { $regex: search, $options: 'i' } },
+      { description: { $regex: search, $options: 'i' } },
+    ];
+  }
+
+  const channels = await Channel.find(query)
+    .populate('creatorId', 'name email')
+    .sort('-createdAt');
   res.status(200).json({ status: 'success', data: { channels } });
+});
+
+export const getAdminChannelMessages = catchAsync(async (req, res, _next) => {
+  const { channelId } = req.params;
+  const messages = await Message.find({ channelId })
+    .populate('senderId', 'name email avatar')
+    .sort('createdAt');
+
+  res.status(200).json({
+    status: 'success',
+    data: { messages },
+  });
 });
 
 export const editChannel = catchAsync(async (req, res, next) => {
@@ -30,7 +53,7 @@ export const editChannel = catchAsync(async (req, res, next) => {
   }
 
   const channel = await Channel.findByIdAndUpdate(
-    req.params.channelId,
+    req.body.channelId,
     { name, description },
     { new: true, runValidators: true }
   );
@@ -80,7 +103,7 @@ export const adminDeleteMessage = catchAsync(async (req, res, next) => {
 });
 
 export const blockStudent = catchAsync(async (req, res, _next) => {
-  const { userId } = req.params;
+  const { userId } = req.body;
 
   const user = await User.findById(userId);
   if (user) {
