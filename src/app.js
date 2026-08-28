@@ -41,7 +41,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // Handle browser preflight requests before route matching or DB work.
-app.options('*', cors(corsOptions));
+app.options('/{*path}', cors(corsOptions));
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
