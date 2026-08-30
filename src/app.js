@@ -9,31 +9,39 @@ import { AppError } from './utils/AppError.js';
 
 const app = express();
 
+app.set('trust proxy', 1);
+
 app.use(helmet());
 
 const corsOptions = {
   origin: function (origin, callback) {
     if (!origin) return callback(null, true);
 
-    if (process.env.CLIENT_URL) {
-      const allowedOrigins = process.env.CLIENT_URL.split(',').map(
-        (url) => url.trim().replace(/\/$/, '') // Remove any trailing slash
-      );
-
-      // Remove trailing slash from incoming origin just in case
-      const incomingOrigin = origin.replace(/\/$/, '');
-
-      if (allowedOrigins.includes(incomingOrigin)) {
-        return callback(null, true);
+    let clientUrls = process.env.CLIENT_URL;
+    if (!clientUrls) {
+      if (process.env.NODE_ENV === 'production') {
+        // Fail loudly in production to prevent insecure CORS defaults
+        throw new Error(
+          'CRITICAL: CLIENT_URL environment variable is missing in production!'
+        );
       }
-
-      // Instead of throwing an error which causes a 500 status, just return false
-      // This allows the browser to handle the CORS failure cleanly
-      return callback(null, false);
+      clientUrls = 'http://localhost:5173';
     }
 
-    // Default behavior if CLIENT_URL is not set
-    return callback(null, true);
+    const allowedOrigins = clientUrls.split(',').map(
+      (url) => url.trim().replace(/\/$/, '') // Remove any trailing slash
+    );
+
+    // Remove trailing slash from incoming origin just in case
+    const incomingOrigin = origin.replace(/\/$/, '');
+
+    if (allowedOrigins.includes(incomingOrigin)) {
+      return callback(null, true);
+    }
+
+    // Instead of throwing an error which causes a 500 status, just return false
+    // This allows the browser to handle the CORS failure cleanly
+    return callback(null, false);
   },
   credentials: true,
 };

@@ -5,7 +5,7 @@ import { ROLES } from '../../config/roles.js';
 const COOKIE_OPTIONS = {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
-  sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+  sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Must be 'none' if frontend and backend are on different domains (e.g., Vercel and Render)
   maxAge: 7 * 24 * 60 * 60 * 1000,
 };
 
