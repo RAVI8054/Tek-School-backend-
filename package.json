@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "prepare": "husky",
+    "prepare": "husky || exit 0",
     "dev": "nodemon src/index.js",
     "start": "node src/index.js",
     "seed:admin": "node src/seedAdmin.js"
