@@ -64,6 +64,12 @@ router.post(
   validate(valid.registerInstructorSchema),
   ctrl.createInstructor
 );
+router.get(
+  '/instructor',
+  protect,
+  restrictTo(ROLES.ADMIN),
+  ctrl.getAllInstructors
+);
 router.patch(
   '/instructor/:id',
   protect,
@@ -110,6 +116,12 @@ router.post(
   restrictTo(ROLES.ADMIN, ROLES.ADMISSIONS),
   validate(valid.registerStudentSchema),
   ctrl.createStudent
+);
+router.get(
+  '/student',
+  protect,
+  restrictTo(ROLES.ADMIN, ROLES.ADMISSIONS),
+  ctrl.getAllStudents
 );
 router.patch(
   '/student/:id',

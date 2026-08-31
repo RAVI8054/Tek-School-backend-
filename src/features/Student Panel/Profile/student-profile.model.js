@@ -8,6 +8,21 @@ const studentProfileSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
+    track: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    cohort: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    city: {
+      type: String,
+      trim: true,
+      default: '',
+    },
     createdChannelsCount: {
       type: Number,
       default: 0,

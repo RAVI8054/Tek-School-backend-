@@ -51,6 +51,7 @@ export const registerFinanceSchema = z.object({
 export const registerInstructorSchema = z.object({
   body: z.object({
     ...baseUserSchema,
+    bio: z.string().optional(),
   }),
 });
 
@@ -64,6 +65,9 @@ export const registerStudentSchema = z.object({
   body: z.object({
     ...baseUserSchema,
     clientType: z.enum(['landingPage', 'studentPanel']).optional(),
+    track: z.string().optional(),
+    cohort: z.string().optional(),
+    city: z.string().optional(),
   }),
 });
 
