@@ -1,6 +1,7 @@
 import { Channel } from '../../Student Panel/Community/channel.model.js';
 import { Message } from '../../Student Panel/Community/message.model.js';
 import { User } from '../../auth/auth.model.js';
+import { StudentProfile } from '../../Student Panel/Profile/student-profile.model.js';
 import { catchAsync } from '../../../utils/catchAsync.js';
 import { AppError } from '../../../utils/AppError.js';
 
@@ -18,6 +19,29 @@ export const getAllChannels = catchAsync(async (req, res, _next) => {
     .populate('creatorId', 'name email')
     .sort('-createdAt');
   res.status(200).json({ status: 'success', data: { channels } });
+});
+
+export const getBlockedStudents = catchAsync(async (req, res, _next) => {
+  const blockedProfiles = await StudentProfile.find({
+    isCommunityBlocked: true,
+  }).populate('userId', 'name email role createdAt');
+
+  // Map to the shape expected by frontend, taking data from profile and user object
+  const blockedUsers = blockedProfiles.map((p) => ({
+    _id: p.userId._id,
+    name: p.userId.name,
+    email: p.userId.email,
+    role: p.userId.role,
+    createdAt: p.userId.createdAt,
+    isBlocked: p.isCommunityBlocked,
+    blockReason: p.communityBlockReason,
+    blockedAt: p.communityBlockedAt,
+  }));
+
+  res.status(200).json({
+    status: 'success',
+    data: { users: blockedUsers },
+  });
 });
 
 export const getAdminChannelMessages = catchAsync(async (req, res, _next) => {
@@ -77,10 +101,13 @@ export const adminDeleteChannel = catchAsync(async (req, res, next) => {
 
   // Decrement original creator's count if status was active
   if (channel.status === 'active') {
-    const user = await User.findById(channel.creatorId);
-    if (user) {
-      user.createdChannelsCount = Math.max(0, user.createdChannelsCount - 1);
-      await user.save({ validateBeforeSave: false });
+    const profile = await StudentProfile.findOne({ userId: channel.creatorId });
+    if (profile) {
+      profile.createdChannelsCount = Math.max(
+        0,
+        profile.createdChannelsCount - 1
+      );
+      await profile.save();
     }
   }
 
@@ -102,16 +129,56 @@ export const adminDeleteMessage = catchAsync(async (req, res, next) => {
   res.status(200).json({ status: 'success', message: 'Message removed' });
 });
 
-export const blockStudent = catchAsync(async (req, res, _next) => {
-  const { userId } = req.body;
+export const blockStudent = catchAsync(async (req, res, next) => {
+  const { userId, note } = req.body;
+
+  if (!userId) {
+    return next(
+      new AppError('Please provide a userId in the request body.', 400)
+    );
+  }
 
   const user = await User.findById(userId);
-  if (user) {
-    user.isBlocked = true;
-    await user.save({ validateBeforeSave: false });
+  if (!user) {
+    return next(new AppError('User not found', 404));
   }
+
+  const profile = await StudentProfile.findOneAndUpdate(
+    { userId },
+    { $setOnInsert: { createdChannelsCount: 0, isCommunityBlocked: false } },
+    { upsert: true, new: true }
+  );
+
+  profile.isCommunityBlocked = true;
+  profile.communityBlockedAt = new Date();
+  if (note) {
+    profile.communityBlockReason = note;
+  }
+  await profile.save();
 
   res
     .status(200)
     .json({ status: 'success', message: 'Student community access revoked' });
+});
+
+export const unblockStudent = catchAsync(async (req, res, next) => {
+  const { userId } = req.body;
+
+  if (!userId) {
+    return next(
+      new AppError('Please provide a userId in the request body.', 400)
+    );
+  }
+
+  const profile = await StudentProfile.findOne({ userId });
+  if (profile) {
+    profile.isCommunityBlocked = false;
+    profile.communityBlockReason = '';
+    profile.communityBlockedAt = null;
+    await profile.save();
+  }
+
+  res
+    .status(200)
+    .json({ status: 'success', message: 'Student community access restored' });
 });

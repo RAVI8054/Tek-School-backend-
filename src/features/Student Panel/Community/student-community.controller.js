@@ -1,5 +1,6 @@
 import { Channel } from './channel.model.js';
 import { Message } from './message.model.js';
+import { StudentProfile } from '../Profile/student-profile.model.js';
 import { catchAsync } from '../../../utils/catchAsync.js';
 import { AppError } from '../../../utils/AppError.js';
 
@@ -8,9 +9,14 @@ import { AppError } from '../../../utils/AppError.js';
 // ─────────────────────────────────────────────────────────────
 
 export const createChannel = catchAsync(async (req, res, next) => {
-  const user = req.user;
+  // Upsert profile for the student
+  const profile = await StudentProfile.findOneAndUpdate(
+    { userId: req.user.id },
+    { $setOnInsert: { createdChannelsCount: 0, isCommunityBlocked: false } },
+    { upsert: true, new: true }
+  );
 
-  if (user.createdChannelsCount >= 3) {
+  if (profile.createdChannelsCount >= 3) {
     return next(
       new AppError('Limit reached. You can only create up to 3 channels.', 403)
     );
@@ -60,8 +66,8 @@ export const createChannel = catchAsync(async (req, res, next) => {
     members: [req.user.id],
   });
 
-  user.createdChannelsCount += 1;
-  await user.save({ validateBeforeSave: false });
+  profile.createdChannelsCount += 1;
+  await profile.save();
 
   res.status(201).json({ status: 'success', data: { channel } });
 });
@@ -145,11 +151,14 @@ export const deleteChannel = catchAsync(async (req, res, next) => {
   // Cascade delete all messages in this channel
   await Message.deleteMany({ channelId: channel._id });
 
-  req.user.createdChannelsCount = Math.max(
-    0,
-    req.user.createdChannelsCount - 1
-  );
-  await req.user.save({ validateBeforeSave: false });
+  const profile = await StudentProfile.findOne({ userId: req.user.id });
+  if (profile) {
+    profile.createdChannelsCount = Math.max(
+      0,
+      profile.createdChannelsCount - 1
+    );
+    await profile.save();
+  }
 
   res.status(200).json({ status: 'success', message: 'Channel deleted' });
 });

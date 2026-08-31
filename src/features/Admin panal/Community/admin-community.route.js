@@ -8,6 +8,8 @@ import {
   adminDeleteChannel,
   adminDeleteMessage,
   blockStudent,
+  getBlockedStudents,
+  unblockStudent,
 } from './admin-community.controller.js';
 
 const router = express.Router();
@@ -29,6 +31,8 @@ router.delete('/channels/delete', adminDeleteChannel);
 // ADMIN MESSAGE & USER ROUTES
 // ─────────────────────────────────────────────────────────────
 router.delete('/messages/:messageId', adminDeleteMessage);
+router.get('/users/blocked', getBlockedStudents);
 router.post('/users/block', blockStudent);
+router.post('/users/unblock', unblockStudent);
 
 export default router;
