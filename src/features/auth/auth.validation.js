@@ -80,3 +80,15 @@ export const updateGenericUserSchema = z.object({
     email: z.string().email().trim().toLowerCase().optional(),
   }),
 });
+
+export const updateStudentSchema = z.object({
+  body: z.object({
+    name: z.string().min(2).max(80).trim().optional(),
+    email: z.string().email().trim().toLowerCase().optional(),
+    track: z.string().optional(),
+    cohort: z.string().optional(),
+    city: z.string().optional(),
+    attendance: z.number().min(0).max(100).optional(),
+    completion: z.number().min(0).max(100).optional(),
+  }),
+});

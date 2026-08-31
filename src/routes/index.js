@@ -9,6 +9,7 @@ import adminCommunityRouter from '../features/Admin panal/Community/admin-commun
 
 // Student Routes
 import studentCommunityRouter from '../features/Student Panel/Community/student-community.route.js';
+import studentProfileRouter from '../features/Student Panel/Profile/student-profile.route.js';
 
 const router = express.Router();
 
@@ -29,6 +30,10 @@ const routes = [
   {
     path: '/student/community',
     route: studentCommunityRouter,
+  },
+  {
+    path: '/student/profile',
+    route: studentProfileRouter,
   },
 ];
 

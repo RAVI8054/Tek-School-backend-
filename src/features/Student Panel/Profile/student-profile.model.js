@@ -23,6 +23,20 @@ const studentProfileSchema = new mongoose.Schema(
       trim: true,
       default: '',
     },
+    phone: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    bio: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    profile_img: {
+      type: String,
+      default: '',
+    },
     createdChannelsCount: {
       type: Number,
       default: 0,

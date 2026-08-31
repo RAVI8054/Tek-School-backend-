@@ -141,7 +141,35 @@ export const createStudent = catchAsync(async (req, res) => {
 
   res.status(201).json({ status: 'success', data: result });
 });
-export const updateStudent = updateRoleController(ROLES.STUDENT);
+export const updateStudent = catchAsync(async (req, res) => {
+  const { track, cohort, city, name, email } = req.body;
+  const userId = req.params.id;
+
+  // 1. Update core User data
+  const userUpdates = {};
+  if (name !== undefined) userUpdates.name = name;
+  if (email !== undefined) userUpdates.email = email;
+
+  const result = await authService.updateGenericUser(
+    userId,
+    userUpdates,
+    ROLES.STUDENT
+  );
+
+  // 2. Update Student Profile
+  const profileUpdates = {};
+  if (track !== undefined) profileUpdates.track = track;
+  if (cohort !== undefined) profileUpdates.cohort = cohort;
+  if (city !== undefined) profileUpdates.city = city;
+  // Note: attendance and completion would ideally exist in StudentProfile or similar
+
+  await StudentProfile.findOneAndUpdate({ userId }, profileUpdates, {
+    new: true,
+    upsert: true,
+  });
+
+  res.status(200).json({ status: 'success', data: result });
+});
 export const deleteStudent = deleteRoleController(ROLES.STUDENT);
 
 export const getAllStudents = catchAsync(async (req, res) => {
@@ -175,7 +203,8 @@ export const getAllStudents = catchAsync(async (req, res) => {
       completion: 0,
       placement: 'Not started',
       atRisk: false,
-      phone: '+91 90000 00000',
+      phone: p.phone || '',
+      profile_img: p.profile_img || '',
     };
   });
 

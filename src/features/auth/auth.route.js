@@ -127,7 +127,7 @@ router.patch(
   '/student/:id',
   protect,
   restrictTo(ROLES.ADMIN, ROLES.ADMISSIONS),
-  validate(valid.updateGenericUserSchema),
+  validate(valid.updateStudentSchema),
   ctrl.updateStudent
 );
 router.delete(
