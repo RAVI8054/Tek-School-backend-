@@ -203,7 +203,8 @@ export const logout = catchAsync(async (req, res) => {
 
 export const forgotPassword = catchAsync(async (req, res) => {
   const { email } = req.body;
-  const clientUrl = process.env.CLIENT_URL || 'http://localhost:3001';
+  const clientUrl =
+    req.headers.origin || process.env.CLIENT_URL || 'http://localhost:5173';
   await authService.forgotPassword(email, clientUrl);
   res.status(200).json({
     status: 'success',
