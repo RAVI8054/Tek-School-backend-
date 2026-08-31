@@ -17,6 +17,16 @@ const createTransporter = () => {
   });
 };
 
+const getLogoUrl = () => {
+  const baseUrl = process.env.CLIENT_URL || 'https://tek-schoo.vercel.app';
+  // If running locally, webmail clients (like Gmail) cannot load images from localhost.
+  const timestamp = Date.now();
+  if (baseUrl.includes('localhost')) {
+    return `https://tek-schoo.vercel.app/tekschool-logo.png?v=${timestamp}`;
+  }
+  return `${baseUrl}/tekschool-logo.png?v=${timestamp}`;
+};
+
 /**
  * Sends a password-reset email with a styled HTML body.
  *
@@ -45,20 +55,18 @@ export const sendPasswordResetEmail = async (to, resetUrl, name = 'there') => {
 
               <!-- Logo Header -->
               <tr>
-                <td style="background:#ffffff; padding:24px 40px; text-align:center; border-bottom: 1px solid #f3f4f6;">
-                  <img src="https://tekschool.in/tekschool-logo.png" alt="TekSchool Logo" style="height:40px; width:auto; display:inline-block;" />
+                <td style="background:#ffffff; padding:32px 40px; text-align:center;">
+                  <img src="${getLogoUrl()}" alt="TekSchool Logo" style="height:48px; width:auto; display:inline-block; border:none; outline:none;" />
                 </td>
               </tr>
               
               <!-- Hero Header -->
               <tr>
                 <td style="background:linear-gradient(135deg,#1E1B4B 0%,#2D5FA8 100%);
-                            padding:32px 40px;text-align:center;">
-                  <h1 style="margin:0;color:#ffffff;font-size:26px;font-weight:800;
-                             letter-spacing:-0.5px;">TekSchool</h1>
-                  <p style="margin:6px 0 0;color:rgba(255,255,255,0.70);font-size:13px;">
+                            padding:36px 40px;text-align:center;">
+                  <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:700;letter-spacing:-0.5px;">
                     Password Reset Request
-                  </p>
+                  </h1>
                 </td>
               </tr>
 
@@ -163,20 +171,18 @@ export const sendWelcomeEmail = async (to, name, role, password, loginUrl) => {
 
               <!-- Logo Header -->
               <tr>
-                <td style="background:#ffffff; padding:24px 40px; text-align:center; border-bottom: 1px solid #f3f4f6;">
-                  <img src="https://tekschool.in/tekschool-logo.png" alt="TekSchool Logo" style="height:40px; width:auto; display:inline-block;" />
+                <td style="background:#ffffff; padding:32px 40px; text-align:center;">
+                  <img src="${getLogoUrl()}" alt="TekSchool Logo" style="height:48px; width:auto; display:inline-block; border:none; outline:none;" />
                 </td>
               </tr>
               
               <!-- Hero Header -->
               <tr>
                 <td style="background:linear-gradient(135deg,#1E1B4B 0%,#2D5FA8 100%);
-                            padding:32px 40px;text-align:center;">
-                  <h1 style="margin:0;color:#ffffff;font-size:26px;font-weight:800;
-                             letter-spacing:-0.5px;">TekSchool</h1>
-                  <p style="margin:6px 0 0;color:rgba(255,255,255,0.70);font-size:13px;">
+                            padding:36px 40px;text-align:center;">
+                  <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:700;letter-spacing:-0.5px;">
                     Welcome Aboard!
-                  </p>
+                  </h1>
                 </td>
               </tr>
 
@@ -271,20 +277,18 @@ export const sendEnquiryAcknowledgementEmail = async (to, name) => {
 
               <!-- Logo Header -->
               <tr>
-                <td style="background:#ffffff; padding:24px 40px; text-align:center; border-bottom: 1px solid #f3f4f6;">
-                  <img src="https://tekschool.in/tekschool-logo.png" alt="TekSchool Logo" style="height:40px; width:auto; display:inline-block;" />
+                <td style="background:#ffffff; padding:32px 40px; text-align:center;">
+                  <img src="${getLogoUrl()}" alt="TekSchool Logo" style="height:48px; width:auto; display:inline-block; border:none; outline:none;" />
                 </td>
               </tr>
               
               <!-- Hero Header -->
               <tr>
                 <td style="background:linear-gradient(135deg,#1E1B4B 0%,#2D5FA8 100%);
-                            padding:32px 40px;text-align:center;">
-                  <h1 style="margin:0;color:#ffffff;font-size:26px;font-weight:800;
-                             letter-spacing:-0.5px;">TekSchool</h1>
-                  <p style="margin:6px 0 0;color:rgba(255,255,255,0.70);font-size:13px;">
+                            padding:36px 40px;text-align:center;">
+                  <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:700;letter-spacing:-0.5px;">
                     Enquiry Received
-                  </p>
+                  </h1>
                 </td>
               </tr>
 
