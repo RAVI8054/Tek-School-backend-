@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { ROLES } from '../../../config/roles.js';
 
 const instructorProfileSchema = new mongoose.Schema(
   {
@@ -13,6 +14,22 @@ const instructorProfileSchema = new mongoose.Schema(
       trim: true,
       default: '',
     },
+    role: {
+      type: String,
+      trim: true,
+      default: ROLES.INSTRUCTOR,
+    },
+    photoUrl: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    credentials: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
   },
   {
     timestamps: true,

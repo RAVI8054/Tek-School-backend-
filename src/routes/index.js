@@ -16,6 +16,9 @@ import studentPlacementsRouter from '../features/Student Panel/Placements/studen
 // Payment Routes
 import paymentRouter from '../features/payment/payment.routes.js';
 
+// Workshop Routes
+import workshopRouter from '../features/Admin panal/Workshops/workshops.route.js';
+
 const router = express.Router();
 
 // Centralized Route Registry
@@ -51,6 +54,10 @@ const routes = [
   {
     path: '/payments',
     route: paymentRouter,
+  },
+  {
+    path: '/workshops',
+    route: workshopRouter,
   },
 ];
 
