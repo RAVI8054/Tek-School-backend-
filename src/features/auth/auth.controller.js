@@ -3,6 +3,7 @@ import * as authService from './auth.service.js';
 import { ROLES } from '../../config/roles.js';
 import { StudentProfile } from '../Student Panel/Profile/student-profile.model.js';
 import { InstructorProfile } from '../Instructor/Profile/instructor-profile.model.js';
+import { SalesTeamProfile } from '../Sales Team/Profile/salesteam-profile.model.js';
 import { User } from './auth.model.js';
 
 const COOKIE_OPTIONS = {
@@ -124,6 +125,81 @@ export const deleteInstructor = deleteRoleController(ROLES.INSTRUCTOR);
 export const createAdmissions = createRoleController(ROLES.ADMISSIONS);
 export const updateAdmissions = updateRoleController(ROLES.ADMISSIONS);
 export const deleteAdmissions = deleteRoleController(ROLES.ADMISSIONS);
+
+// ─────────────────────────────────────────────────────────────
+// SALES TEAM Management
+// ─────────────────────────────────────────────────────────────
+export const createSalesTeam = catchAsync(async (req, res) => {
+  const { bio, ...userData } = req.body;
+  const result = await authService.createUserWithRole(
+    userData,
+    ROLES.SALES_TEAM
+  );
+
+  await SalesTeamProfile.create({
+    userId: result.user.id,
+    bio: bio || '',
+  });
+
+  res.status(201).json({ status: 'success', data: result });
+});
+
+export const updateSalesTeam = catchAsync(async (req, res) => {
+  const { name, email, bio } = req.body;
+  const userId = req.params.id;
+
+  const userUpdates = {};
+  if (name !== undefined) userUpdates.name = name;
+  if (email !== undefined) userUpdates.email = email;
+
+  const result = await authService.updateGenericUser(
+    userId,
+    userUpdates,
+    ROLES.SALES_TEAM
+  );
+
+  const profileUpdates = {};
+  if (bio !== undefined) profileUpdates.bio = bio;
+
+  await SalesTeamProfile.findOneAndUpdate({ userId }, profileUpdates, {
+    new: true,
+    upsert: true,
+  });
+
+  res.status(200).json({ status: 'success', data: result });
+});
+
+export const deleteSalesTeam = deleteRoleController(ROLES.SALES_TEAM);
+
+export const getAllSalesTeam = catchAsync(async (req, res) => {
+  const users = await User.find({ role: ROLES.SALES_TEAM })
+    .sort({ createdAt: -1 })
+    .lean();
+
+  const userIds = users.map((u) => u._id);
+  const profiles = await SalesTeamProfile.find({
+    userId: { $in: userIds },
+  }).lean();
+
+  const profileMap = profiles.reduce((acc, p) => {
+    acc[p.userId] = p;
+    return acc;
+  }, {});
+
+  const salesTeam = users.map((user) => {
+    const p = profileMap[user._id] || {};
+    return {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      bio: p.bio || '',
+      createdAt: user.createdAt,
+      lastLoginAt: user.lastLoginAt,
+    };
+  });
+
+  res.status(200).json({ status: 'success', data: { salesTeam } });
+});
 
 // ─────────────────────────────────────────────────────────────
 // STUDENT Management

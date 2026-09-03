@@ -29,7 +29,7 @@ slotRouter.get(
 slotRouter.delete(
   '/:id',
   protect,
-  restrictTo(ROLES.ADMIN),
+  restrictTo(ROLES.ADMIN, ROLES.SALES_TEAM),
   slotCtrl.deleteSlot
 );
 
@@ -58,6 +58,10 @@ router.patch(
   ctrl.updateEnquiry
 );
 
-router.delete('/:id', restrictTo(ROLES.ADMIN), ctrl.deleteEnquiry);
+router.delete(
+  '/:id',
+  restrictTo(ROLES.ADMIN, ROLES.SALES_TEAM),
+  ctrl.deleteEnquiry
+);
 
 export default router;

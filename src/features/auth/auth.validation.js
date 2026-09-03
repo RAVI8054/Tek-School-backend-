@@ -61,6 +61,13 @@ export const registerAdmissionsSchema = z.object({
   }),
 });
 
+export const registerSalesTeamSchema = z.object({
+  body: z.object({
+    ...baseUserSchema,
+    bio: z.string().optional(),
+  }),
+});
+
 export const registerStudentSchema = z.object({
   body: z.object({
     ...baseUserSchema,
@@ -78,6 +85,14 @@ export const updateGenericUserSchema = z.object({
   body: z.object({
     name: z.string().min(2).max(80).trim().optional(),
     email: z.string().email().trim().toLowerCase().optional(),
+  }),
+});
+
+export const updateSalesTeamSchema = z.object({
+  body: z.object({
+    name: z.string().min(2).max(80).trim().optional(),
+    email: z.string().email().trim().toLowerCase().optional(),
+    bio: z.string().optional(),
   }),
 });
 

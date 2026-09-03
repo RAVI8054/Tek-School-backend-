@@ -3,6 +3,7 @@ export const ROLES = {
   FINANCE: 'finance',
   INSTRUCTOR: 'instructor',
   ADMISSIONS: 'admissions',
+  SALES_TEAM: 'salesteam',
   STUDENT: 'student',
 };
 
@@ -13,4 +14,5 @@ export const STAFF_ROLES = [
   ROLES.FINANCE,
   ROLES.INSTRUCTOR,
   ROLES.ADMISSIONS,
+  ROLES.SALES_TEAM,
 ];

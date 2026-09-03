@@ -106,6 +106,34 @@ router.delete(
   ctrl.deleteAdmissions
 );
 
+// Create, Read, Edit, Delete Sales Team
+router.post(
+  '/salesteam',
+  protect,
+  restrictTo(ROLES.ADMIN),
+  validate(valid.registerSalesTeamSchema),
+  ctrl.createSalesTeam
+);
+router.get(
+  '/salesteam',
+  protect,
+  restrictTo(ROLES.ADMIN),
+  ctrl.getAllSalesTeam
+);
+router.patch(
+  '/salesteam/:id',
+  protect,
+  restrictTo(ROLES.ADMIN),
+  validate(valid.updateSalesTeamSchema),
+  ctrl.updateSalesTeam
+);
+router.delete(
+  '/salesteam/:id',
+  protect,
+  restrictTo(ROLES.ADMIN),
+  ctrl.deleteSalesTeam
+);
+
 // ==============================================================================
 // 2. ADMISSIONS & ADMIN ROUTES (Manage Students)
 // ==============================================================================

@@ -2,6 +2,7 @@ import { Workshop } from './workshops.model.js';
 import { WorkshopBooking } from './workshop-booking.model.js';
 import { AppError } from '../../../utils/AppError.js';
 import { UploadService } from '../../../services/upload/upload.service.js';
+import { InstructorProfile } from '../../Instructor/Profile/instructor-profile.model.js';
 import mongoose from 'mongoose';
 
 // Create a new workshop
@@ -38,6 +39,17 @@ export const createWorkshop = async (req, res, next) => {
       );
     }
 
+    // `host` from frontend is the User ObjectId. We need the InstructorProfile ObjectId.
+    const instructorProfile = await InstructorProfile.findOne({ userId: host });
+    if (!instructorProfile) {
+      return next(
+        new AppError(
+          'No instructor profile found for the provided host user ID.',
+          404
+        )
+      );
+    }
+
     const newWorkshop = await Workshop.create({
       title,
       blurb,
@@ -52,7 +64,7 @@ export const createWorkshop = async (req, res, next) => {
       isFree,
       price,
       imageUrl,
-      host,
+      host: instructorProfile._id,
       takeaways,
       forWho,
       prerequisites,
