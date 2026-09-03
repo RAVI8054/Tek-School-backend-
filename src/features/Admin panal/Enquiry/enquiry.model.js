@@ -34,6 +34,10 @@ const demoRequestSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    best_time_to_call: {
+      type: String,
+      trim: true,
+    },
     inquiry_type: {
       type: String,
       enum: [
@@ -61,7 +65,7 @@ const demoRequestSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['new', 'in_progress', 'scheduled', 'rejected', 'completed'],
+      enum: ['new', 'qualified', 'demo', 'follow_ups', 'won', 'lost'],
       default: 'new',
     },
     assigned_to: {
