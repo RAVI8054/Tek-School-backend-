@@ -13,6 +13,9 @@ import studentCommunityRouter from '../features/Student Panel/Community/student-
 import studentProfileRouter from '../features/Student Panel/Profile/student-profile.route.js';
 import studentPlacementsRouter from '../features/Student Panel/Placements/studentPlacements.route.js';
 
+// Payment Routes
+import paymentRouter from '../features/payment/payment.routes.js';
+
 const router = express.Router();
 
 // Centralized Route Registry
@@ -44,6 +47,10 @@ const routes = [
   {
     path: '/student/placements',
     route: studentPlacementsRouter,
+  },
+  {
+    path: '/payments',
+    route: paymentRouter,
   },
 ];
 
