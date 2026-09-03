@@ -33,7 +33,9 @@ class RazorpayService {
       const order = await this.razorpay.orders.create(options);
       return order;
     } catch (error) {
-      throw new Error(`Razorpay Order Creation Failed: ${error.message}`);
+      const msg =
+        error.error?.description || error.message || JSON.stringify(error);
+      throw new Error(`Razorpay Order Creation Failed: ${msg}`);
     }
   }
 

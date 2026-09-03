@@ -39,6 +39,7 @@ export const initiatePayment = async (req, res, next) => {
       data: {
         payment: newPayment,
         providerOrder: order,
+        key: process.env.RAZORPAY_KEY_ID,
       },
     });
   } catch (error) {
