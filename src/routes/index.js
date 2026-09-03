@@ -6,10 +6,12 @@ import authRouter from '../features/auth/auth.route.js';
 // Admin Routes
 import enquiryRouter from '../features/Admin panal/Enquiry/enquiry.route.js';
 import adminCommunityRouter from '../features/Admin panal/Community/admin-community.route.js';
+import adminPlacementsRouter from '../features/Admin panal/Placements/adminPlacements.route.js';
 
 // Student Routes
 import studentCommunityRouter from '../features/Student Panel/Community/student-community.route.js';
 import studentProfileRouter from '../features/Student Panel/Profile/student-profile.route.js';
+import studentPlacementsRouter from '../features/Student Panel/Placements/studentPlacements.route.js';
 
 const router = express.Router();
 
@@ -34,6 +36,14 @@ const routes = [
   {
     path: '/student/profile',
     route: studentProfileRouter,
+  },
+  {
+    path: '/admin/placements',
+    route: adminPlacementsRouter,
+  },
+  {
+    path: '/student/placements',
+    route: studentPlacementsRouter,
   },
 ];
 
