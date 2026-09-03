@@ -13,6 +13,7 @@ export const bookDemoSchema = z.object({
         timePreference: z.string().trim().optional(),
       })
       .optional(),
+    best_time_to_call: z.string().trim().optional(),
     education: z.string().trim().optional(),
     inquiry_type: z.enum(
       [
@@ -37,23 +38,11 @@ export const bookDemoSchema = z.object({
 export const updateEnquirySchema = z.object({
   body: z.object({
     status: z
-      .enum(
-        [
-          'new',
-          'in_progress',
-          'scheduled',
-          'rescheduled',
-          'completed',
-          'enrolled',
-          'rejected',
-          'junk',
-        ],
-        {
-          errorMap: () => ({
-            message: 'Invalid status provided',
-          }),
-        }
-      )
+      .enum(['new', 'qualified', 'demo', 'follow_ups', 'won', 'lost'], {
+        errorMap: () => ({
+          message: 'Invalid status provided',
+        }),
+      })
       .optional(),
     assigned_to: z.string().optional(),
     confirmed_slot: z
@@ -73,16 +62,7 @@ export const getEnquiriesQuerySchema = z.object({
     limit: z.string().optional(),
     category: z.enum(['tekschool', 'admission']).optional(),
     status: z
-      .enum([
-        'new',
-        'in_progress',
-        'scheduled',
-        'rescheduled',
-        'completed',
-        'enrolled',
-        'rejected',
-        'junk',
-      ])
+      .enum(['new', 'qualified', 'demo', 'follow_ups', 'won', 'lost'])
       .optional(),
     inquiry_type: z
       .enum([

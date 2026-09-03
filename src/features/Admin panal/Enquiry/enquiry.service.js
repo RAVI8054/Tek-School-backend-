@@ -56,24 +56,11 @@ export const getAllEnquiries = async (query) => {
   };
 };
 
-export const getEnquiryById = async (id, userId = null) => {
+export const getEnquiryById = async (id) => {
   const enquiry = await DemoRequest.findById(id).populate(
     'assigned_to admin_notes.addedBy',
     'name email role'
   );
-
-  if (enquiry && enquiry.status === 'new') {
-    enquiry.status = 'in_progress';
-    const systemNote = {
-      note: "[System] Status automatically changed from 'new' to 'in_progress' upon opening.",
-    };
-    if (userId) {
-      systemNote.addedBy = userId;
-    }
-    enquiry.admin_notes.push(systemNote);
-    await enquiry.save();
-  }
-
   return enquiry;
 };
 
