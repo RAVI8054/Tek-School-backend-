@@ -151,6 +151,12 @@ router.get(
   restrictTo(ROLES.ADMIN, ROLES.ADMISSIONS),
   ctrl.getAllStudents
 );
+router.get(
+  '/student/:id',
+  protect,
+  restrictTo(ROLES.ADMIN, ROLES.ADMISSIONS),
+  ctrl.getStudentById
+);
 router.patch(
   '/student/:id',
   protect,

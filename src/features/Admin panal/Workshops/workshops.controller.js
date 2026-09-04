@@ -107,6 +107,79 @@ export const getAllWorkshops = async (req, res, next) => {
   }
 };
 
+// Get all workshop bookings (Admin)
+export const getAllWorkshopBookings = async (req, res, next) => {
+  try {
+    const bookings = await WorkshopBooking.find()
+      .populate('user', 'name email')
+      .populate('workshop', 'title track')
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      status: 'success',
+      results: bookings.length,
+      data: {
+        bookings,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Get current user's workshop bookings
+export const getMyWorkshopBookings = async (req, res, next) => {
+  try {
+    const bookings = await WorkshopBooking.find({ user: req.user._id })
+      .populate('workshop', 'title track startTime imageUrl durationText')
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      status: 'success',
+      results: bookings.length,
+      data: {
+        bookings,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Update workshop booking (Admin)
+export const updateWorkshopBooking = async (req, res, next) => {
+  try {
+    const booking = await WorkshopBooking.findByIdAndUpdate(
+      req.params.id,
+      { paymentStatus: req.body.paymentStatus },
+      { new: true, runValidators: true }
+    );
+    if (!booking) {
+      return res
+        .status(404)
+        .json({ status: 'fail', message: 'Booking not found' });
+    }
+    res.status(200).json({ status: 'success', data: { booking } });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Delete workshop booking (Admin)
+export const deleteWorkshopBooking = async (req, res, next) => {
+  try {
+    const booking = await WorkshopBooking.findByIdAndDelete(req.params.id);
+    if (!booking) {
+      return res
+        .status(404)
+        .json({ status: 'fail', message: 'Booking not found' });
+    }
+    res.status(204).json({ status: 'success', data: null });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // Get a single workshop
 export const getWorkshopById = async (req, res, next) => {
   try {

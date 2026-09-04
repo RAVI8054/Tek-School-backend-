@@ -5,6 +5,8 @@ import { StudentProfile } from '../Student Panel/Profile/student-profile.model.j
 import { InstructorProfile } from '../Instructor/Profile/instructor-profile.model.js';
 import { SalesTeamProfile } from '../Sales Team/Profile/salesteam-profile.model.js';
 import { User } from './auth.model.js';
+import { WorkshopBooking } from '../Admin panal/Workshops/workshop-booking.model.js';
+import { Payment } from '../payment/payment.model.js';
 
 const COOKIE_OPTIONS = {
   httpOnly: true,
@@ -237,7 +239,15 @@ export const updateStudent = catchAsync(async (req, res) => {
   if (track !== undefined) profileUpdates.track = track;
   if (cohort !== undefined) profileUpdates.cohort = cohort;
   if (city !== undefined) profileUpdates.city = city;
-  // Note: attendance and completion would ideally exist in StudentProfile or similar
+  if (req.body.attendance !== undefined)
+    profileUpdates.attendance = req.body.attendance;
+  if (req.body.completion !== undefined)
+    profileUpdates.completion = req.body.completion;
+  if (req.body.placement !== undefined)
+    profileUpdates.placement = req.body.placement;
+  if (req.body.atRisk !== undefined) profileUpdates.atRisk = req.body.atRisk;
+  if (req.body.isCommunityBlocked !== undefined)
+    profileUpdates.isCommunityBlocked = req.body.isCommunityBlocked;
 
   await StudentProfile.findOneAndUpdate({ userId }, profileUpdates, {
     new: true,
@@ -263,28 +273,76 @@ export const getAllStudents = catchAsync(async (req, res) => {
     return acc;
   }, {});
 
-  const students = users.map((user) => {
-    const p = profileMap[user._id] || {};
-    return {
-      id: user._id,
-      name: user.name,
-      email: user.email,
-      track: p.track || 'Unassigned',
-      cohort: p.cohort || 'Unassigned',
-      city: p.city || 'Unknown',
-      enrolledAt: user.createdAt,
-      lastLoginAt: user.lastLoginAt,
-      isCommunityBlocked: p.isCommunityBlocked || false,
-      attendance: 100,
-      completion: 0,
-      placement: 'Not started',
-      atRisk: false,
-      phone: p.phone || '',
-      profile_img: p.profile_img || '',
-    };
-  });
+  const students = users
+    .map((user) => {
+      const p = profileMap[user._id] || {};
+      return {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        track: p.track || 'Unassigned',
+        cohort: p.cohort || 'Unassigned',
+        city: p.city || 'Unknown',
+        enrolledAt: user.createdAt,
+        lastLoginAt: user.lastLoginAt,
+        isCommunityBlocked: p.isCommunityBlocked || false,
+        attendance: 100,
+        completion: 0,
+        placement: 'Not started',
+        atRisk: false,
+        phone: p.phone || '',
+        profile_img: p.profile_img || '',
+      };
+    })
+    .filter((s) => s.track !== 'Workshop Only');
 
   res.status(200).json({ status: 'success', data: { students } });
+});
+
+export const getStudentById = catchAsync(async (req, res) => {
+  const user = await User.findById(req.params.id);
+  if (!user || user.role !== ROLES.STUDENT) {
+    return res
+      .status(404)
+      .json({ status: 'fail', message: 'Student not found' });
+  }
+
+  const profile = await StudentProfile.findOne({ userId: user._id });
+
+  const workshopBookings = await WorkshopBooking.find({ user: user._id })
+    .populate('workshop', 'title track startTime imageUrl durationText')
+    .sort({ createdAt: -1 });
+
+  const payments = await Payment.find({ user: user._id }).sort({
+    createdAt: -1,
+  });
+
+  const studentData = {
+    id: user._id,
+    name: user.name,
+    email: user.email,
+    track: profile?.track || 'Unassigned',
+    cohort: profile?.cohort || 'Unassigned',
+    city: profile?.city || 'Unknown',
+    enrolledAt: user.createdAt,
+    lastLoginAt: user.lastLoginAt,
+    isCommunityBlocked: profile?.isCommunityBlocked || false,
+    attendance: 100,
+    completion: 0,
+    placement: 'Not started',
+    atRisk: false,
+    phone: profile?.phone || '',
+    profile_img: profile?.profile_img || '',
+  };
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      student: studentData,
+      workshopBookings,
+      payments,
+    },
+  });
 });
 
 // ==============================================================
