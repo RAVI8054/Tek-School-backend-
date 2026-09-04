@@ -7,6 +7,7 @@ import { StudentProfile } from '../Student Panel/Profile/student-profile.model.j
 import { WorkshopBooking } from '../Admin panal/Workshops/workshop-booking.model.js';
 import { Workshop } from '../Admin panal/Workshops/workshops.model.js';
 import { ROLES } from '../../config/roles.js';
+import { sendWelcomeEmail } from '../../utils/email.js';
 
 export const initiatePayment = async (req, res, next) => {
   try {
@@ -86,6 +87,21 @@ export const guestCheckout = async (req, res, next) => {
         phone: phone || '',
         track: 'Workshop Only',
       });
+
+      const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+      const loginUrl = `${clientUrl}/student/login`;
+
+      try {
+        await sendWelcomeEmail(
+          user.email,
+          user.name,
+          user.role,
+          randomPassword,
+          loginUrl
+        );
+      } catch (error) {
+        console.error('Failed to send welcome email to guest user:', error);
+      }
     }
 
     // 1. Create a Pending Payment Record in DB
